@@ -1,25 +1,32 @@
-class Square:
-    '''Defining the size of  a square'''
-    def __init__(self, size=0):
-        if not isinstance(size, int):
-            raise TypeError("size must be an integer")
-        if size < 0:
-            raise ValueError("size must be >= 0")
-        self.size = size
-
-    '''Getting the size of  a square'''
-    def get_size(self):
-        return self.size
-
-    '''Defining a square by size'''
-    def set_size(self, size):
-        self.size = size
-
-    '''Defining a square by area'''
-    def area(self):
-        return self.size ** 2
-
-    '''Defining a square by perimeter'''
-    def perimeter(self):
-        return 4 * self.size
+"""
+This module is a definition of a class Square .
+"""
+class Square():
+    """
+    A class that represents a square
     
+    Attributes:
+        size(int): The size of the square
+
+    Methods:
+        __init__(self, size): Initializes a Square object with the given size.
+        area: Returns the area of the square
+    """
+
+    def __init__(self, size=0):
+        """Initialize a square instance
+            Args:
+                size(int): the size of the square initialized to 0
+                """
+        if size != int(size):
+            raise TypeError("size must be an integer")
+        if size  < 0:
+            raise ValueError("size must be >= 0")
+        self.__size = size
+
+    def area(self):
+        """
+        Method that computes area of the square
+        """
+        sq_area = self.__size ** 2
+        return sq_area    
