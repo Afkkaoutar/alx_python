@@ -1,51 +1,51 @@
-import csv
+#!/usr/bin/python
+"""import requests module"""
 import requests
+""" Import sys module to get command line arguments"""
 import sys
+""" import csv"""
+import csv
 
-def get_employee_data(employee_id):
-    base_url = "https://jsonplaceholder.typicode.com"
+"""
+Get the employee ID from the first argument
+"""
+employee_id = sys.argv[1]
+"""
+Define the base URL for the API
+"""
+base_url = "https://jsonplaceholder.typicode.com/users/"
 
-    # Fetch employee details
-    employee_response = requests.get(f"{base_url}/users/{employee_id}")
-    employee_response.raise_for_status()
-    employee_data = employee_response.json()
-    user_id = employee_data.get("id")
-    username = employee_data.get("username")
+employee = requests.get(base_url + employee_id).json()
+employee_name = employee["name"]
+todos = requests.get(base_url + employee_id + "/todos").json()
 
-    # Fetch employee's TODO list
-    todos_response = requests.get(f"{base_url}/todos?userId={employee_id}")
-    todos_response.raise_for_status()
-    todos_data = todos_response.json()
+"""Initialize the total and done tasks counters"""
+total_tasks = 0
+done_tasks = 0
+"""Initialize an empty list for the done tasks titles"""
+done_tasks_titles = []
+"""Loop through the todos list and update the counters and titles list"""
+for todo in todos:
+    total_tasks += 1
+    if todo["completed"]:
+        done_tasks += 1
+        done_tasks_titles.append(todo["title"])
 
-    return user_id, username, todos_data
+"""Define the CSV filename"""
+csv_filename = "{}.csv".format(employee_id)
 
-def export_to_csv(user_id, username, todos_data):
-    filename = f"{user_id}.csv"
+""" Write data to CSV file"""
+with open(csv_filename, mode='w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
+    
+    """ Write header"""
+    csv_writer.writerow(["USER_ID", "USERNAME", "TASK_COMPLETED_STATUS", "TASK_TITLE"])
 
-    with open(filename, 'w', newline='') as csvfile:
-        csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(["USER_ID", "USERNAME", "TASK_COMPLETED_STATUS", "TASK_TITLE"])
+    """ Write rows"""
+    for title in done_tasks_titles:
+        csv_writer.writerow([employee_id, employee_name, "True", title])
 
-        for todo in todos_data:
-            task_completed_status = "True" if todo['completed'] else "False"
-            task_title = todo['title']
-            csv_writer.writerow([user_id, username, task_completed_status, task_title])
+    for i in range(total_tasks - done_tasks):
+        csv_writer.writerow([employee_id, employee_name, "False", todos[i]["title"]])
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python3 1-export_to_CSV.py <employee_id>")
-        sys.exit(1)
-
-    employee_id = int(sys.argv[1])
-
-    try:
-        user_id, username, todos_data = get_employee_data(employee_id)
-        if len(todos_data) == 0:
-            print(f"No tasks found for user {username} (ID: {user_id})")
-            sys.exit(0)  # Exit gracefully if no tasks found
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-        sys.exit(1)
-
-    export_to_csv(user_id, username, todos_data)
-    print(f"Data exported to {user_id}.csv")
+print("Employee {} tasks exported to {}".format(employee_name, csv_filename))
