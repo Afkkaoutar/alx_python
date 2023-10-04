@@ -1,18 +1,26 @@
+import csv
 import requests
 import sys
-import csv
 
 def get_employee_data(employee_id):
     base_url = "https://jsonplaceholder.typicode.com"
 
     # Fetch employee details
     employee_response = requests.get(f"{base_url}/users/{employee_id}")
+
+    # Check for errors in the response
+    employee_response.raise_for_status()
+
     employee_data = employee_response.json()
     user_id = employee_data.get("id")
     username = employee_data.get("username")
 
     # Fetch employee's TODO list
     todos_response = requests.get(f"{base_url}/todos?userId={employee_id}")
+
+    # Check for errors in the response
+    todos_response.raise_for_status()
+
     todos_data = todos_response.json()
 
     return user_id, username, todos_data
