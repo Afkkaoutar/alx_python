@@ -7,20 +7,14 @@ def get_employee_data(employee_id):
 
     # Fetch employee details
     employee_response = requests.get(f"{base_url}/users/{employee_id}")
-
-    # Check for errors in the response
     employee_response.raise_for_status()
-
     employee_data = employee_response.json()
     user_id = employee_data.get("id")
     username = employee_data.get("username")
 
     # Fetch employee's TODO list
     todos_response = requests.get(f"{base_url}/todos?userId={employee_id}")
-
-    # Check for errors in the response
     todos_response.raise_for_status()
-
     todos_data = todos_response.json()
 
     return user_id, username, todos_data
@@ -46,6 +40,9 @@ if __name__ == "__main__":
 
     try:
         user_id, username, todos_data = get_employee_data(employee_id)
+        if len(todos_data) == 0:
+            print(f"No tasks found for user {username} (ID: {user_id})")
+            sys.exit(0)  # Exit gracefully if no tasks found
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         sys.exit(1)
