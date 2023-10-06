@@ -1,56 +1,59 @@
+#!/usr/bin/python3
+"""Gather Data from API.
+
+This script uses REST API (with employee data)
+and returns info about the employee's TODO list progress.
+
+The script has also extended to export data in JSON format."""
 import json
 import requests
 import sys
 
-def get_user_info(employee_id):
-    """
-    Retrieve user information (ID and username) using the given employee_id.
-    
-    Args:
-        employee_id (int): The ID of the employee.
-        
-    Returns:
-        Tuple[int, str]: A tuple containing the user's ID and username.
-    """
-    user_response = requests.get(f"https://jsonplaceholder.typicode.com/users/{employee_id}")
-    if user_response.status_code == 200:
-        user_data = user_response.json()
-        return user_data['id'], user_data['username']
-    else:
-        return None, None
+# this function block gets employee's TODO progress
+def generate_employee_todo_progress(employee_id):
+    user_url = f"https://jsonplaceholder.typicode.com/users/{employee_id}"
+    todos_url = f"https://jsonplaceholder.typicode.com/users/{employee_id}/todos"
 
-def main():
-    """
-    Main function to export user tasks to a JSON file.
-    """
-    if len(sys.argv) != 2:
-        print("Usage: python3 2-export_to_JSON.py <employee_id>")
-        sys.exit(1)
+    # fetches employee's name and other details
+    user_response = requests.get(user_url)
+    user_data = user_response.json()
+    employee_name = user_data['name']
 
-    employee_id = sys.argv[1]
+    # fetches the employee's TODO list
+    todos_response = requests.get(todos_url)
+    todos_data = todos_response.json()
 
-    user_id, username = get_user_info(employee_id)
+    # calculates the employee's completed tasks
+    completed_tasks = [todo for todo in todos_data if todo['completed']]
+    total_tasks = len(todos_data)
+    completed_count = len(completed_tasks)
 
-    if user_id is None:
-        print(f"User with ID {employee_id} not found.")
-        sys.exit(1)
+    # displays the TODO list progress in this format
+    return employee_name, completed_count, total_tasks, completed_tasks
 
-    response = requests.get(f"https://jsonplaceholder.typicode.com/todos?userId={employee_id}")
-    tasks = response.json()
+# this function prints the TODO list that has been generated in the fornmat below
+def print_todo_list_progress(employee_name, completed_count, total_tasks, completed_tasks):
+    print(f"Employee {employee_name} is done with tasks({completed_count}/{total_tasks}):")
+    for task in completed_tasks:
+        print(f"\t{task['title']}")
 
-    json_data = {user_id: []}
+# this new function block exports data to JSON
+def export_to_json(employee_id, employee_name, completed_tasks):
+    data = {str(employee_id): [{"task": task['title'], "completed": task['completed'], "username": employee_name} for task in completed_tasks]}
+    filename = f"{employee_id}.json"
+    with open(filename, 'w') as json_file:
+        json.dump(data, json_file)
 
-    for task in tasks:
-        task_completed_status = task['completed']
-        task_title = task['title']
-        json_data[user_id].append({"task": task_title, "completed": task_completed_status, "username": username})
-
-    json_filename = f"{user_id}.json"
-
-    with open(json_filename, 'w') as jsonfile:
-        json.dump(json_data, jsonfile, indent=2)
-
-    print(f"Data has been exported to {json_filename}")
-
+# this block checks if the script is being run directly
+# if that's the case, then it takes the employee ID as a command line arg
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2:
+        print("Usage: python3 0-gather_data_from_an_API.py <employee_id>")
+        sys.exit(1)
+
+    employee_id = int(sys.argv[1])
+    employee_name, completed_count, total_tasks, completed_tasks = generate_employee_todo_progress(employee_id)
+    print_todo_list_progress(employee_name, completed_count, total_tasks, completed_tasks)
+
+# exports the data to JSON
+    export_to_json(employee_id, employee_name, completed_tasks)
