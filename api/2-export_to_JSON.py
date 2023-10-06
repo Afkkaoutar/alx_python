@@ -1,57 +1,62 @@
-import json
+#!/usr/bin/python
+"""
+import requests module
+"""
 import requests
+""" import sys"""
 import sys
+""" import json"""
+import json
 
-def export_to_json(employee_id):
-    """
-    Export a user's tasks to a JSON file.
+"""
+Get the employee ID from the command line arguments
+"""
+employee_id = sys.argv[1]
 
-    Args:
-        employee_id (int): The employee's ID.
+""" 
+Define the base URL for the API
+"""
+base_url = "https://jsonplaceholder.typicode.com/users/"
 
-    Returns:
-        None
-    """
-    # Define the API endpoints
-    user_endpoint = f"https://jsonplaceholder.typicode.com/users/{employee_id}"
-    todo_endpoint = f"https://jsonplaceholder.typicode.com/todos?userId={employee_id}"
+""" Get the employee details from the API"""
+employee = requests.get(base_url + employee_id).json()
 
-    # Make requests to fetch user details and TODO list
-    user_response = requests.get(user_endpoint)
-    todo_response = requests.get(todo_endpoint)
+""" Get the employee name"""
+employee_name = employee["name"]
 
-    # Check if the requests were successful
-    if user_response.status_code != 200 or todo_response.status_code != 200:
-        print("Failed to retrieve data from the API.")
-        return
+""" Get the employee TODO list from the API"""
+todos = requests.get(base_url + employee_id + "/todos").json()
 
-    # Parse the JSON responses
-    user_data = user_response.json()
-    todo_data = todo_response.json()
+""" Initialize the total and done tasks counters"""
+total_tasks = 0
+done_tasks = 0
 
-    # Create a list to store the employee's tasks
-    employee_tasks = []
+""" Initialize a list for tasks"""
+tasks_list = []
 
-    # Populate the list with task information
-    for task in todo_data:
-        task_info = {
-            "task": task["title"],
-            "completed": task["completed"],
-            "username": user_data["username"]
-        }
-        employee_tasks.append(task_info)
+"""
+ Loop through the todos list and update the counters and tasks list
+ """
+for todo in todos:
+    total_tasks += 1
+    task_data = {
+        "task": todo["title"],
+        "completed": todo["completed"],
+        "username": employee["username"]
+    }
+    tasks_list.append(task_data)
+    if todo["completed"]:
+        done_tasks += 1
 
-    # Write the list to a JSON file
-    filename = f"{employee_id}.json"
-    with open(filename, 'w') as json_file:
-        json.dump(employee_tasks, json_file, indent=4)
+""" Create a dictionary for the JSON structure"""
+json_data = {employee_id: tasks_list}
 
-    print(f"Data exported to {filename}")
+""" Write the JSON data to a file"""
+file_name = f"{employee_id}.json"
+with open(file_name, 'w') as json_file:
+    json.dump(json_data, json_file, indent=2)
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python3 export_to_JSON.py <employee_id>")
-        sys.exit(1)
-
-    employee_id = int(sys.argv[1])
-    export_to_json(employee_id)
+"""
+ Print a message indicating the export is successful
+ """
+print("Data exported to {}. Employee {} has completed {} out of {} tasks.".format(file_name, employee_name, done_tasks, total_tasks))
